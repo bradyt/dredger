@@ -23,3 +23,6 @@ coverage:
 	flutter test --coverage
 	genhtml -o coverage coverage/lcov.info
 	reload-browser 'Google Chrome'
+
+install:
+	flutter build apk --flavor=play --target-platform android-arm,android-arm64,android-x64 --split-per-abi

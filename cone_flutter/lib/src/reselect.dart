@@ -12,7 +12,7 @@ import 'package:cone_lib/pad_zeros.dart' show padZeros;
 import 'package:intl/intl.dart' show DateFormat;
 import 'package:built_collection/built_collection.dart';
 import 'package:reselect/reselect.dart'
-    show createSelector1, createSelector2, Selector;
+    show createSelector1, createSelector2, createSelector3, Selector;
 
 import 'package:cone/src/redux/state.dart';
 import 'package:cone/src/utils.dart'
@@ -107,10 +107,12 @@ final Selector<ConeState, BuiltList<Transaction>> reselectTransactions =
       : journal.journalItems.whereType<Transaction>().toBuiltList(),
 );
 
-final Selector<ConeState, bool> makeSaveButtonAvailable = createSelector2(
+final Selector<ConeState, bool> makeSaveButtonAvailable = createSelector3(
   (ConeState state) => state.debugMode,
+  (ConeState state) => state.saveInProgress,
   validTransaction,
-  (bool debugMode, bool validTransaction) => debugMode || validTransaction,
+  (bool debugMode, bool saveInProgress, bool validTransaction) =>
+      (debugMode || validTransaction) && !saveInProgress,
 );
 
 final Selector<ConeState, String> formattedExample =
