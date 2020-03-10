@@ -48,7 +48,7 @@ abstract class ConeState implements Built<ConeState, ConeStateBuilder> {
   bool get saveInProgress;
   int get postingKey;
   int get refreshCount;
-  int get transactionIndex;
+  int get journalItemIndex;
 
   static void _initializeBuilder(ConeStateBuilder b) => b
     ..initialized = false
@@ -56,7 +56,7 @@ abstract class ConeState implements Built<ConeState, ConeStateBuilder> {
     ..postingKey = 0
     ..refreshCount = 0
     ..saveInProgress = false
-    ..transactionIndex = -1;
+    ..journalItemIndex = -1;
 }
 
 List<Middleware<ConeState>> coneMiddleware = <Middleware<ConeState>>[

@@ -5,6 +5,7 @@ import 'package:cone_lib/cone_lib.dart'
         Amount,
         AmountBuilder,
         Journal,
+        JournalItem,
         Posting,
         Transaction,
         TransactionBuilder;
@@ -29,9 +30,9 @@ import 'package:cone/src/utils.dart'
 final Selector<ConeState, Transaction> reselectHintTransaction =
     createSelector1(
   (ConeState state) => state,
-  (ConeState state) => (state.transactionIndex == -1)
+  (ConeState state) => (state.journalItemIndex == -1)
       ? Transaction()
-      : reselectTransactions(state).elementAt(state.transactionIndex),
+      : reselectTransactions(state).elementAt(state.journalItemIndex),
 );
 
 final Selector<ConeState, DateFormat> reselectDateFormat = createSelector1(
@@ -97,6 +98,15 @@ bool validTransaction(ConeState state) {
       allQuantitiesHaveAccounts &&
       atMostOneEmptyQuantity;
 }
+
+final Selector<ConeState, BuiltList<JournalItem>> reselectJournalItems =
+    createSelector2(
+  (ConeState state) => state.journal,
+  (ConeState state) => state.reverseSort,
+  (Journal journal, bool reverseSort) => reverseSort
+      ? journal.journalItems.reversed.toBuiltList()
+      : journal.journalItems.toBuiltList(),
+);
 
 final Selector<ConeState, BuiltList<Transaction>> reselectTransactions =
     createSelector2(

@@ -16,6 +16,7 @@ part 'types.g.dart';
   AccountDirective,
   Amount,
   Comment,
+  CommodityDirective,
   Journal,
   OtherDirective,
   Posting,
@@ -29,7 +30,15 @@ String topLevelParser(String contents) {
       (JournalParser().parse(contents).value as Iterable<Token<String>>)
           .toBuiltList();
   final BuiltList<JournalItem> journalItems =
-      tokens.map<JournalItem>(parseJournalItem).toBuiltList();
+      tokens.map<JournalItem>(parseJournalItem).where(
+    (JournalItem journalItem) {
+      if (journalItem is AccountDirective) {
+        print((journalItem as AccountDirective).account);
+      }
+      return !(journalItem is Comment) ||
+          (journalItem as Comment).comment.isNotEmpty;
+    },
+  ).toBuiltList();
 
   final Journal journal =
       Journal((JournalBuilder b) => b..journalItems = journalItems.toBuilder());
@@ -71,14 +80,34 @@ abstract class AccountDirective
   factory AccountDirective([void Function(AccountDirectiveBuilder) updates]) =
       _$AccountDirective;
   AccountDirective._();
-  static Serializer<AccountDirective> get serializer => _$accountDirectiveSerializer;
+  static Serializer<AccountDirective> get serializer =>
+      _$accountDirectiveSerializer;
 
   int get firstLine;
   int get lastLine;
   String get account;
+  BuiltMap<String, String> get keyValues;
 
   @override
   String toString() => '$account';
+}
+
+abstract class CommodityDirective
+    implements Directive, Built<CommodityDirective, CommodityDirectiveBuilder> {
+  factory CommodityDirective(
+          [void Function(CommodityDirectiveBuilder) updates]) =
+      _$CommodityDirective;
+  CommodityDirective._();
+  static Serializer<CommodityDirective> get serializer =>
+      _$commodityDirectiveSerializer;
+
+  int get firstLine;
+  int get lastLine;
+  String get commodity;
+  BuiltMap<String, String> get keyValues;
+
+  @override
+  String toString() => '$commodity';
 }
 
 abstract class OtherDirective
@@ -86,7 +115,8 @@ abstract class OtherDirective
   factory OtherDirective([void Function(OtherDirectiveBuilder) updates]) =
       _$OtherDirective;
   OtherDirective._();
-  static Serializer<OtherDirective> get serializer => _$otherDirectiveSerializer;
+  static Serializer<OtherDirective> get serializer =>
+      _$otherDirectiveSerializer;
 
   int get firstLine;
   int get lastLine;

@@ -37,9 +37,9 @@ class Transactions extends StatelessWidget {
         builder: (BuildContext context, Store<ConeState> store) {
       final ConeState state = store.state;
 
-      final BuiltList<Transaction> transactions = (state.journal == null)
-          ? BuiltList<Transaction>()
-          : reselectTransactions(state).toBuiltList();
+      final BuiltList<JournalItem> journalItems = (state.journal == null)
+          ? BuiltList<JournalItem>()
+          : reselectJournalItems(state).toBuiltList();
 
       final bool loading = state.isRefreshing;
 
@@ -56,25 +56,32 @@ class Transactions extends StatelessWidget {
               },
               child: ListView.builder(
                 physics: const AlwaysScrollableScrollPhysics(),
-                itemCount: transactions.length,
+                itemCount: journalItems.length,
                 itemBuilder: (BuildContext context, int index) => Padding(
                   padding: EdgeInsets.fromLTRB(4, (index == 0) ? 8 : 0, 4,
-                      (index == transactions.length - 1) ? 8 : 0),
+                      (index == journalItems.length - 1) ? 8 : 0),
                   child: Card(
-                    color: (index == store.state.transactionIndex &&
-                            store.state.transactionIndex != -1)
+                    color: (index == store.state.journalItemIndex &&
+                            store.state.journalItemIndex != -1)
                         ? ((Theme.of(context).brightness == Brightness.dark)
                             ? const Color(0xff556b2f) // darkolivegreen
                             : const Color(0xff8fbc8f)) // darkseagreen2
                         : null,
                     elevation: 3,
                     child: InkWell(
-                      onTap: () => store
-                          .dispatch(UpdateTransactionIndexAction(index: index)),
+                      onTap: () {
+                        // print('first line: ${journalItems[index].firstLine}');
+                        // print('last line:  ${journalItems[index].lastLine}');
+                        Navigator.pushNamed(context, '/raw');
+                      },
+                      // onLongPress: () => print('hello');
+                      // onTap: () => store
+                      //     .dispatch(
+                      //     UpdateTransactionIndexAction(index: index)),
                       child: Padding(
                         padding: const EdgeInsets.fromLTRB(8, 8, 8, 8),
                         child: FormattedJournalItem(
-                          transaction: transactions[index],
+                          journalItem: journalItems[index],
                           dark: Theme.of(context).brightness == Brightness.dark,
                         ),
                       ),
@@ -91,7 +98,7 @@ class Transactions extends StatelessWidget {
 }
 
 class FormattedJournalItem extends StatelessWidget {
-  const FormattedJournalItem({@required this.transaction, @required this.dark});
+  const FormattedJournalItem({@required this.journalItem, @required this.dark});
 
   // Color choices taken from
   // https://github.com/emacs-mirror/emacs/blob/emacs-26.3/lisp/font-lock.el
@@ -106,25 +113,28 @@ class FormattedJournalItem extends StatelessWidget {
 
   // Mapping transaction elements to Emacs colors follows that of ledger-mode.el
 
-  final Transaction transaction;
+  final JournalItem journalItem;
   final bool dark;
 
   @override
   Widget build(BuildContext context) {
     Widget formattedJournalItem;
+
     final Color colorNewline =
         dark ? const Color(0xffa9a9a9) : const Color(0xffd3d3d3);
-    // final Color colorBuiltin =
-    //     dark ? const Color(0xffb0c4de) : const Color(0xff483d8b);
-    // final Color colorComment =
-    //     dark ? const Color(0xffff7f24) : const Color(0xffb22222);
-    if (transaction is Transaction) {
-      final Color colorConstant =
-          dark ? const Color(0xff7fffd4) : const Color(0xff008b8b);
-      // final Color colorString =
-      //     dark ? const Color(0xffffa07a) : const Color(0xff8b2252);
-      final Color colorKeyword =
-          dark ? const Color(0xff00ffff) : const Color(0xff800080);
+    final Color colorBuiltin =
+        dark ? const Color(0xffb0c4de) : const Color(0xff483d8b);
+    final Color colorComment =
+        dark ? const Color(0xffff7f24) : const Color(0xffb22222);
+    final Color colorString =
+        dark ? const Color(0xffffa07a) : const Color(0xff8b2252);
+    final Color colorKeyword =
+        dark ? const Color(0xff00ffff) : const Color(0xff800080);
+    final Color colorConstant =
+        dark ? const Color(0xff7fffd4) : const Color(0xff008b8b);
+
+    if (journalItem is Transaction) {
+      final Transaction transaction = journalItem as Transaction;
       final Color colorWarning =
           dark ? const Color(0xffffc0cb) : const Color(0xffff6a6a);
       final String date = transaction.date;
@@ -190,6 +200,85 @@ class FormattedJournalItem extends StatelessWidget {
         ],
       );
       formattedJournalItem = column;
+    } else if (journalItem is AccountDirective) {
+      final entries = (journalItem as AccountDirective).keyValues.entries;
+      formattedJournalItem = Column(
+        children: <Widget>[
+          Row(
+            children: <Widget>[
+              FormatString(
+                text: 'account',
+                color: colorBuiltin,
+              ),
+              FormatString(
+                text: ' ${entries.elementAt(0).value}',
+                color: colorString,
+              ),
+            ],
+          ),
+          for (MapEntry entry in entries.skip(1))
+            Row(
+              children: <Widget>[
+                FormatString(
+                  text: '  ${entry.key}',
+                  color: colorBuiltin,
+                ),
+                FormatString(
+                  text: ' ${entry.value}',
+                  color: (entry.key == 'alias')
+                      ? colorString
+                      : ((entry.key == 'note' || entry.key == 'payee')
+                          ? colorKeyword
+                          : null),
+                ),
+              ],
+            ),
+        ],
+      );
+    } else if (journalItem is CommodityDirective) {
+      final entries = (journalItem as CommodityDirective).keyValues.entries;
+      formattedJournalItem = Column(
+        children: <Widget>[
+          Row(
+            children: <Widget>[
+              FormatString(
+                text: 'commodity',
+                color: colorBuiltin,
+              ),
+              FormatString(
+                text: ' ${entries.elementAt(0).value}',
+                color: colorConstant,
+              ),
+            ],
+          ),
+          for (MapEntry entry in entries.skip(1))
+            Row(
+              children: <Widget>[
+                FormatString(
+                  text: '  ${entry.key}',
+                  color: colorBuiltin,
+                ),
+                FormatString(
+                  text: ' ${entry.value}',
+                  color: (entry.key == 'alias')
+                      ? colorString
+                      : ((entry.key == 'note' || entry.key == 'payee')
+                          ? colorKeyword
+                          : ((entry.key == 'format') ? colorConstant : null)),
+                ),
+              ],
+            ),
+        ],
+      );
+    } else if (journalItem is Directive) {
+      formattedJournalItem = Container(child: Text('other directive'));
+    } else if (journalItem is Comment) {
+      formattedJournalItem = FormatString(
+        text: '${(journalItem as Comment)}',
+        color: colorComment,
+      );
+      // formattedJournalItem = Container(child: Text((journalItem as Comment).comment}));
+
       // } else if (RegExp(r'[A-Za-z]').hasMatch(chunk[0])) {
       //   formattedChunk = SingleChildScrollView(
       //     scrollDirection: Axis.horizontal,
@@ -261,6 +350,7 @@ class FormatString extends StatelessWidget {
       TextSpan(
         text: text,
       ),
+      softWrap: false,
       style: TextStyle(
         fontFamily: 'IBMPlexMono',
         color: color,
@@ -311,7 +401,7 @@ ${DateTime.now().millisecondsSinceEpoch}''',
                 ..dispatch(Actions.refreshFileContents);
             });
           },
-          child: (store.state.transactionIndex == -1)
+          child: (store.state.journalItemIndex == -1)
               ? const Icon(Icons.add)
               : const Icon(Icons.content_copy),
         );

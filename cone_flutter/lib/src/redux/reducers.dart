@@ -72,8 +72,8 @@ ConeState firstConeReducer(ConeState state, dynamic action) {
   } else if (action is UpdateTransactionIndexAction) {
     return state.rebuild(
       (ConeStateBuilder b) => b
-        ..transactionIndex =
-            (b.transactionIndex == action.index) ? -1 : action.index,
+        ..journalItemIndex =
+            (b.journalItemIndex == action.index) ? -1 : action.index,
     );
   } else if (action == Actions.updateHintTransaction) {
     return state.rebuild(

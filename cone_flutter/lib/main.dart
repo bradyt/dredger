@@ -8,6 +8,7 @@ import 'package:redux/redux.dart';
 import 'package:cone/src/add_transaction.dart';
 import 'package:cone/src/home.dart';
 import 'package:cone/src/localizations.dart';
+import 'package:cone/src/raw.dart';
 import 'package:cone/src/redux/actions.dart';
 import 'package:cone/src/redux/state.dart';
 import 'package:cone/src/settings.dart';
@@ -116,6 +117,7 @@ class ConeApp extends StatelessWidget {
             '/': (BuildContext context) => Home(),
             '/add-transaction': (BuildContext context) => AddTransaction(),
             '/settings': (BuildContext context) => Settings(),
+            '/raw': (BuildContext context) => Raw(),
           },
         );
       },

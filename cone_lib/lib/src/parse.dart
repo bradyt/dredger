@@ -45,10 +45,31 @@ JournalItem parseJournalItem(Token<String> token) {
   if (token.value.startsWith(RegExp(r'[0-9~]'))) {
     return _parseTransaction(token);
   } else if (token.value.startsWith(RegExp(r'[A-Za-z]'))) {
+    final Iterable<MapEntry<String, String>> entries = token.value
+        .split('\n')
+        .map((String line) => line.trim().split(' '))
+        .map((Iterable<String> words) => MapEntry(
+              words.elementAt(0),
+              (words.length > 1) ? words.skip(1).join(' ') : '',
+            ));
+    final BuiltMap<String, String> keyValues = BuiltMap.from(
+        Map.fromIterable(entries, key: (e) => e.key, value: (e) => e.value));
     if (token.value.startsWith('account')) {
       return AccountDirective(
         (AccountDirectiveBuilder b) => b
-          ..account = token.value.split('account ')[1].split(';')[0].trim()
+          ..account =
+              token.value.split(RegExp(r'^account '))[1].split(';')[0].trim()
+          ..keyValues = keyValues.toBuilder()
+          ..firstLine = token.line
+          ..lastLine = Token.lineAndColumnOf(token.buffer, token.stop)[0],
+      );
+    } else if (token.value.startsWith('commodity')) {
+      print(token.value);
+      return CommodityDirective(
+        (CommodityDirectiveBuilder b) => b
+          ..commodity =
+              token.value.split(RegExp(r'^commodity '))[1].split(';')[0].trim()
+          ..keyValues = keyValues.toBuilder()
           ..firstLine = token.line
           ..lastLine = Token.lineAndColumnOf(token.buffer, token.stop)[0],
       );
