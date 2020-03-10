@@ -1,3 +1,4 @@
+import 'package:built_collection/built_collection.dart';
 import 'package:flutter/material.dart' hide Actions;
 import 'package:flutter_redux/flutter_redux.dart';
 import 'package:redux/redux.dart';
@@ -36,9 +37,9 @@ class Transactions extends StatelessWidget {
         builder: (BuildContext context, Store<ConeState> store) {
       final ConeState state = store.state;
 
-      final List<Transaction> transactions = (state.contents == null)
-          ? <Transaction>[]
-          : reselectTransactions(state).toList();
+      final BuiltList<Transaction> transactions = (state.journal == null)
+          ? BuiltList<Transaction>()
+          : reselectTransactions(state).toBuiltList();
 
       final bool loading = state.isRefreshing;
 

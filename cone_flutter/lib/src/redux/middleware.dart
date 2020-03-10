@@ -1,6 +1,10 @@
+import 'dart:convert';
+
+import 'package:flutter/foundation.dart';
 import 'package:redux/redux.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uri_picker/uri_picker.dart';
+import 'package:cone_lib/cone_lib.dart';
 
 import 'package:cone/src/redux/actions.dart';
 import 'package:cone/src/redux/state.dart';
@@ -38,10 +42,30 @@ dynamic firstConeMiddleware(
     );
   } else if (action == Actions.refreshFileContents) {
     if (store.state.ledgerFileUri != null) {
-      UriPicker.readTextFromUri(store.state.ledgerFileUri)
-          .then((String contents) {
-        store.dispatch(UpdateContentsAction(contents));
-      });
+      UriPicker.readTextFromUri(store.state.ledgerFileUri).then<void>(
+        (String contents) {
+          if (contents != store.state.contents) {
+            compute<String, String>(topLevelParser, contents).then(
+              (String jsonJournal) {
+                store
+                  ..dispatch(
+                    UpdateJournalAction(
+                      serializers.deserializeWith(
+                        Journal.serializer,
+                        jsonDecode(
+                          jsonJournal,
+                        ),
+                      ),
+                    ),
+                  )
+                  ..dispatch(UpdateContentsAction(contents));
+              },
+            );
+          } else {
+            store.dispatch(Actions.cancelRefresh);
+          }
+        },
+      );
     }
   } else if (action == Actions.submitTransaction) {
     appendFile(store.state.ledgerFileUri, formattedTransaction(store.state))

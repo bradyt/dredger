@@ -1,6 +1,6 @@
 import 'package:built_value/built_value.dart';
 import 'package:cone_lib/cone_lib.dart'
-    show Posting, Transaction, TransactionBuilder;
+    show Journal, JournalBuilder, Posting, Transaction, TransactionBuilder;
 import 'package:redux/redux.dart';
 // ignore: unused_import
 import 'package:redux_logging/redux_logging.dart' show LoggingMiddleware;
@@ -19,6 +19,8 @@ abstract class ConeState implements Built<ConeState, ConeStateBuilder> {
   ConeBrightness get brightness;
   @nullable
   DateTime get today;
+  @nullable
+  Journal get journal;
   @nullable
   Spacing get spacing;
   @nullable

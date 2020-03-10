@@ -10,6 +10,7 @@ import 'package:cone_lib/cone_lib.dart'
         TransactionBuilder;
 import 'package:cone_lib/pad_zeros.dart' show padZeros;
 import 'package:intl/intl.dart' show DateFormat;
+import 'package:built_collection/built_collection.dart';
 import 'package:reselect/reselect.dart'
     show createSelector1, createSelector2, Selector;
 
@@ -35,7 +36,7 @@ final Selector<ConeState, Transaction> reselectHintTransaction =
 
 final Selector<ConeState, DateFormat> reselectDateFormat = createSelector1(
   reselectTransactions,
-  (List<Transaction> transactions) => (transactions.isEmpty)
+  (BuiltList<Transaction> transactions) => (transactions.isEmpty)
       ? DateFormat('yyyy-MM-dd')
       : ((transactions.last.date.contains('/'))
           ? DateFormat('yyyy/MM/dd')
@@ -44,10 +45,10 @@ final Selector<ConeState, DateFormat> reselectDateFormat = createSelector1(
               : DateFormat('yyyy-MM-dd'))),
 );
 
-final Selector<ConeState, Journal> reselectJournal = createSelector1(
-  (ConeState state) => state.contents,
-  (String contents) => Journal(contents: contents),
-);
+// final Selector<ConeState, Journal> reselectJournal = createSelector1(
+//   (ConeState state) => state.contents,
+//   (String contents) => Journal(contents: contents),
+// );
 
 final Selector<ConeState, bool> descriptionIsEmpty = createSelector1(
   (ConeState state) => state.transaction.description,
@@ -97,13 +98,13 @@ bool validTransaction(ConeState state) {
       atMostOneEmptyQuantity;
 }
 
-final Selector<ConeState, List<Transaction>> reselectTransactions =
+final Selector<ConeState, BuiltList<Transaction>> reselectTransactions =
     createSelector2(
-  reselectJournal,
+  (ConeState state) => state.journal,
   (ConeState state) => state.reverseSort,
   (Journal journal, bool reverseSort) => reverseSort
-      ? journal.journalItems.whereType<Transaction>().toList().reversed.toList()
-      : journal.journalItems.whereType<Transaction>().toList(),
+      ? journal.journalItems.reversed.whereType<Transaction>().toBuiltList()
+      : journal.journalItems.whereType<Transaction>().toBuiltList(),
 );
 
 final Selector<ConeState, bool> makeSaveButtonAvailable = createSelector2(
@@ -145,8 +146,8 @@ final Selector<ConeState, Transaction> reselectImplicitTransaction =
   );
 };
 
-final Selector<ConeState, bool> hideAddTransactionButton =
-    (ConeState state) => state.contents == null || state.saveInProgress;
+final Selector<ConeState, bool> hideAddTransactionButton = (ConeState state) =>
+    state.contents == null || state.saveInProgress || state.isRefreshing;
 
 final Selector<ConeState, String> quantityHint = (ConeState state) => padZeros(
       locale: state.numberLocale,
@@ -156,14 +157,14 @@ final Selector<ConeState, String> quantityHint = (ConeState state) => padZeros(
 
 final Selector<ConeState, List<String> Function(String)>
     reselectDescriptionSuggestions = createSelector1(
-  (ConeState state) => sortSuggestions(descriptions(reselectJournal(state))),
+  (ConeState state) => sortSuggestions(descriptions(state.journal)),
   (List<String> sortedDescriptions) =>
       (String pattern) => filterSuggestions(pattern, sortedDescriptions),
 );
 
 final Selector<ConeState, List<String> Function(String)>
     reselectAccountSuggestions = createSelector1(
-  (ConeState state) => sortSuggestions(accounts(reselectJournal(state))),
+  (ConeState state) => sortSuggestions(accounts(state.journal)),
   (List<String> sortedAccounts) =>
       (String pattern) => filterSuggestions(pattern, sortedAccounts),
 );

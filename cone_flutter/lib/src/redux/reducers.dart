@@ -195,10 +195,18 @@ ConeState firstConeReducer(ConeState state, dynamic action) {
     );
   } else if (action is UpdateContentsAction) {
     return state.rebuild(
+      (ConeStateBuilder b) => b..contents = action.contents,
+    );
+  } else if (action is UpdateJournalAction) {
+    return state.rebuild(
       (ConeStateBuilder b) => b
-        ..contents = action.contents
+        ..journal = action.journal.toBuilder()
         ..isRefreshing = false
         ..refreshCount = state.refreshCount + 1,
+    );
+  } else if (action == Actions.cancelRefresh) {
+    return state.rebuild(
+      (ConeStateBuilder b) => b..isRefreshing = false,
     );
   } else if (action == Actions.markInitialized) {
     return state.rebuild(

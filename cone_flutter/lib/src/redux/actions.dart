@@ -1,10 +1,14 @@
+import 'package:cone_lib/cone_lib.dart' show Journal;
+
 import 'package:cone/src/types.dart';
 import 'package:cone/src/services.dart';
 
 enum Actions {
   addPosting,
+  cancelRefresh,
   getPersistentSettings,
   markInitialized,
+  parse,
   pickLedgerFileUri,
   refreshFileContents,
   resetTransaction,
@@ -57,6 +61,17 @@ class UpdateSystemLocaleAction {
   UpdateSystemLocaleAction(this.systemLocale);
 
   final String systemLocale;
+}
+
+class UpdateJournalAction {
+  UpdateJournalAction(this.journal);
+
+  final Journal journal;
+
+  // @override
+  // String toString() {
+  //   return 'UpdateJournalAction(\'${journal.split('\n')[0]}...\')';
+  // }
 }
 
 class UpdateContentsAction {

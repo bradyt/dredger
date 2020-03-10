@@ -11,13 +11,12 @@ public class UriPickerPlugin: NSObject, FlutterPlugin {
   public func handle(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
     switch call.method {
     case "pickUri":
-        print("made it!")
 
         let panel                     = NSOpenPanel()
         panel.canChooseDirectories    = false
         panel.canChooseFiles          = true
         panel.allowsMultipleSelection = false
-        panel.allowedFileTypes        = ["txt", "ledger", "dat", "journal", ".org", ".beancount"]
+        panel.allowedFileTypes        = ["txt", "ledger", "dat", "journal", "org", "beancount", "hledger"]
         let clicked                   = panel.runModal()
 
         if clicked == NSApplication.ModalResponse.OK {

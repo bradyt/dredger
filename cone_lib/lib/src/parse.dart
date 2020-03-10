@@ -7,7 +7,7 @@ import 'package:cone_lib/src/types.dart';
 
 class _JournalGrammarDefinition extends GrammarDefinition {
   @override
-  Parser<List<Token<String>>> start() => journalItem()
+  Parser<Iterable<Token<String>>> start() => journalItem()
       .flatten()
       .map((String string) => string.trim())
       .token()
@@ -16,22 +16,23 @@ class _JournalGrammarDefinition extends GrammarDefinition {
 
   Parser<dynamic> journalItem() => block() | inert();
 
-  Parser<List<dynamic>> block() =>
+  Parser<Iterable<dynamic>> block() =>
       (pattern('A-Za-z0-9~')) &
       restOfLine() &
       (newline() & restOfBlock()).optional();
 
-  Parser<List<dynamic>> restOfBlock() => indentedLine()
+  Parser<Iterable<dynamic>> restOfBlock() => indentedLine()
       .separatedBy<dynamic>(newline(), optionalSeparatorAtEnd: true);
 
-  Parser<List<dynamic>> indentedLine() => anyOf(' \t').plus() & restOfLine();
+  Parser<Iterable<dynamic>> indentedLine() =>
+      anyOf(' \t').plus() & restOfLine();
 
-  Parser<List<dynamic>> inert() =>
+  Parser<Iterable<dynamic>> inert() =>
       (newline() | (pattern('A-Za-z0-9~').not() & any() & restOfLine())).plus();
 
   Parser<String> newline() => char('\n');
 
-  Parser<List<String>> restOfLine() => newline().neg().star();
+  Parser<Iterable<String>> restOfLine() => newline().neg().star();
 }
 
 class _JournalParserDefinition extends _JournalGrammarDefinition {}
@@ -71,13 +72,14 @@ JournalItem parseJournalItem(Token<String> token) {
 
 Transaction _parseTransaction(Token<String> token) {
   final String chunk = token.value;
-  final List<String> lines = chunk.split('\n');
-  final String date = '${lines[0].split(' ')[0]}';
-  final int splitAt = lines[0].indexOf(' ');
+  final Iterable<String> lines = chunk.split('\n');
+  final String firstLine = lines.elementAt(0);
+  final String date = '${firstLine.split(' ')[0]}';
+  final int splitAt = firstLine.indexOf(' ');
   final String description =
-      (splitAt == -1) ? '' : lines[0].substring(splitAt).trim();
+      (splitAt == -1) ? '' : firstLine.substring(splitAt).trim();
   final ListBuilder<Posting> postingsBuilder = BuiltList<Posting>().toBuilder();
-  for (final String line in lines.sublist(1)) {
+  for (final String line in lines.skip(1)) {
     if (!line.startsWith(RegExp(r'[ \t]*;'))) {
       final String account = '${line.trim().split('  ')[0]}';
       final int splitAt2 = line.trim().indexOf('  ');

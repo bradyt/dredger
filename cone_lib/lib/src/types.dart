@@ -1,31 +1,52 @@
 // ignore_for_file: public_member_api_docs
 
+import 'dart:convert';
 import 'dart:math' show max;
 
 import 'package:built_collection/built_collection.dart';
 import 'package:built_value/built_value.dart';
+import 'package:built_value/serializer.dart';
 import 'package:petitparser/petitparser.dart';
 
 import 'package:cone_lib/parse.dart';
 
 part 'types.g.dart';
 
-class Journal {
-  Journal({String contents}) {
-    final List<Token<String>> tokens =
-        // ignore: avoid_as
-        JournalParser().parse(contents).value as List<Token<String>>;
-    journalItems = tokens.map<JournalItem>(parseJournalItem).toList();
-    transactions = journalItems.whereType<Transaction>().toList();
-  }
+@SerializersFor(<Type>[
+  AccountDirective,
+  Amount,
+  Comment,
+  Journal,
+  OtherDirective,
+  Posting,
+  Transaction,
+])
+final Serializers serializers = _$serializers;
 
-  List<JournalItem> journalItems;
-  List<Transaction> transactions;
+String topLevelParser(String contents) {
+  final BuiltList<Token<String>> tokens =
+      // ignore: avoid_as
+      (JournalParser().parse(contents).value as Iterable<Token<String>>)
+          .toBuiltList();
+  final BuiltList<JournalItem> journalItems =
+      tokens.map<JournalItem>(parseJournalItem).toBuiltList();
 
-  @override
-  String toString() => <String>[
-        for (JournalItem item in journalItems) '$item',
-      ].join('\n');
+  final Journal journal =
+      Journal((JournalBuilder b) => b..journalItems = journalItems.toBuilder());
+
+  final String jsonJournal = jsonEncode(
+    serializers.serializeWith(Journal.serializer, journal),
+  );
+
+  return jsonJournal;
+}
+
+abstract class Journal implements JournalItem, Built<Journal, JournalBuilder> {
+  factory Journal([void Function(JournalBuilder) updates]) = _$Journal;
+  Journal._();
+  static Serializer<Journal> get serializer => _$journalSerializer;
+
+  BuiltList<JournalItem> get journalItems;
 }
 
 abstract class JournalItem {}
@@ -33,6 +54,7 @@ abstract class JournalItem {}
 abstract class Comment implements JournalItem, Built<Comment, CommentBuilder> {
   factory Comment([void Function(CommentBuilder) updates]) = _$Comment;
   Comment._();
+  static Serializer<Comment> get serializer => _$commentSerializer;
 
   int get firstLine;
   int get lastLine;
@@ -49,6 +71,7 @@ abstract class AccountDirective
   factory AccountDirective([void Function(AccountDirectiveBuilder) updates]) =
       _$AccountDirective;
   AccountDirective._();
+  static Serializer<AccountDirective> get serializer => _$accountDirectiveSerializer;
 
   int get firstLine;
   int get lastLine;
@@ -63,6 +86,7 @@ abstract class OtherDirective
   factory OtherDirective([void Function(OtherDirectiveBuilder) updates]) =
       _$OtherDirective;
   OtherDirective._();
+  static Serializer<OtherDirective> get serializer => _$otherDirectiveSerializer;
 
   int get firstLine;
   int get lastLine;
@@ -77,6 +101,7 @@ abstract class Transaction
   factory Transaction([void Function(TransactionBuilder) updates]) =
       _$Transaction;
   Transaction._();
+  static Serializer<Transaction> get serializer => _$transactionSerializer;
 
   int get firstLine;
   int get lastLine;
@@ -100,6 +125,7 @@ abstract class Transaction
 abstract class Posting implements Built<Posting, PostingBuilder> {
   factory Posting([void Function(PostingBuilder) updates]) = _$Posting;
   Posting._();
+  static Serializer<Posting> get serializer => _$postingSerializer;
 
   int get key;
   String get account;
@@ -123,6 +149,7 @@ abstract class Posting implements Built<Posting, PostingBuilder> {
 abstract class Amount implements Built<Amount, AmountBuilder> {
   factory Amount([void Function(AmountBuilder) updates]) = _$Amount;
   Amount._();
+  static Serializer<Amount> get serializer => _$amountSerializer;
 
   String get commodity;
   String get quantity;
